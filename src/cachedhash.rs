@@ -9,7 +9,7 @@ use crate::atomic::AtomicOptionNonZeroU64;
 pub struct CachedHash<T: Eq + Hash, H: Hasher + Default = DefaultHasher> {
     value: T,
     hash: AtomicOptionNonZeroU64,
-    _hasher_phantom: std::marker::PhantomData<Box<H>>,
+    _hasher_phantom: std::marker::PhantomData<H>,
 }
 
 impl<T: Eq + Hash> CachedHash<T> {
