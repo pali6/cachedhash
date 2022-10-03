@@ -1,0 +1,15 @@
+[package]
+name = "cachedhash"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+
+[dependencies]
+
+[dev-dependencies]
+criterion = "0.4"
+
+[[bench]]
+name = "base"
+harness = false
