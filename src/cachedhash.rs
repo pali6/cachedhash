@@ -1,29 +1,35 @@
 use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
+use std::hash::{Hash, Hasher, BuildHasher, BuildHasherDefault};
 use std::num::NonZeroU64;
 use std::ops::{Deref, DerefMut};
 
 use crate::atomic::AtomicOptionNonZeroU64;
 
 #[derive(Debug)]
-pub struct CachedHash<T: Eq + Hash, H: Hasher + Default = DefaultHasher> {
+pub struct CachedHash<T: Eq + Hash, BH: BuildHasher = BuildHasherDefault<DefaultHasher>> {
     value: T,
     hash: AtomicOptionNonZeroU64,
-    _hasher_phantom: std::marker::PhantomData<fn() -> H>,
+    build_hasher: BH,
 }
 
 impl<T: Eq + Hash> CachedHash<T> {
     pub fn new(value: T) -> Self {
-        CachedHash::<T, DefaultHasher>::new_with_hasher(value)
+        CachedHash::<T>::new_with_hasher(value)
     }
 }
 
-impl<T: Eq + Hash, H: Hasher + Default> CachedHash<T, H> {
+impl<T: Eq + Hash, H: Hasher + Default> CachedHash<T, BuildHasherDefault<H>> {
     pub fn new_with_hasher(value: T) -> Self {
+        CachedHash::<T, BuildHasherDefault<H>>::new_with_build_hasher(value, Default::default())
+    }
+}
+
+impl<T: Eq + Hash, BH: BuildHasher> CachedHash<T, BH> {
+    pub fn new_with_build_hasher(value: T, build_hasher: BH) -> Self {
         CachedHash {
             value,
             hash: AtomicOptionNonZeroU64::new_none(),
-            _hasher_phantom: std::marker::PhantomData,
+            build_hasher,
         }
     }
 
@@ -52,20 +58,20 @@ impl<T: Eq + Hash, H: Hasher + Default> CachedHash<T, H> {
     }
 }
 
-impl<T: Eq + Hash, H: Hasher + Default> PartialEq for CachedHash<T, H> {
+impl<T: Eq + Hash, BH: BuildHasher> PartialEq for CachedHash<T, BH> {
     fn eq(&self, other: &Self) -> bool {
         self.value == other.value
     }
 }
 
-impl<T: Eq + Hash, H: Hasher + Default> Eq for CachedHash<T, H> {}
+impl<T: Eq + Hash, BH: BuildHasher> Eq for CachedHash<T, BH> {}
 
-impl<T: Eq + Hash, H: Hasher + Default> Hash for CachedHash<T, H> {
+impl<T: Eq + Hash, BH: BuildHasher> Hash for CachedHash<T, BH> {
     fn hash<H2: Hasher>(&self, state: &mut H2) {
         if let Some(hash) = self.hash.get_raw() {
             state.write_u64(hash);
         } else {
-            let mut hasher = H::default();
+            let mut hasher = self.build_hasher.build_hasher();
             self.value.hash(&mut hasher);
             // MaybeHash can only store non-zero values so we create a small collision by bumping up hash 0 to 1.
             let hash = NonZeroU64::new(hasher.finish()).unwrap_or(NonZeroU64::new(1).unwrap());
@@ -75,7 +81,7 @@ impl<T: Eq + Hash, H: Hasher + Default> Hash for CachedHash<T, H> {
     }
 }
 
-impl<T: Eq + Hash, H: Hasher + Default> Deref for CachedHash<T, H> {
+impl<T: Eq + Hash, BH: BuildHasher> Deref for CachedHash<T, BH> {
     type Target = T;
 
     #[inline]
@@ -84,19 +90,19 @@ impl<T: Eq + Hash, H: Hasher + Default> Deref for CachedHash<T, H> {
     }
 }
 
-impl<T: Eq + Hash, H: Hasher + Default> DerefMut for CachedHash<T, H> {
+impl<T: Eq + Hash, BH: BuildHasher> DerefMut for CachedHash<T, BH> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         Self::get_mut(self)
     }
 }
 
-impl<T: Eq + Hash + Clone, H: Hasher + Default> Clone for CachedHash<T, H> {
+impl<T: Eq + Hash + Clone, BH: BuildHasher + Clone> Clone for CachedHash<T, BH> {
     fn clone(&self) -> Self {
         CachedHash {
             value: self.value.clone(),
             hash: self.hash.clone(),
-            _hasher_phantom: std::marker::PhantomData,
+            build_hasher: self.build_hasher.clone(),
         }
     }
 }
