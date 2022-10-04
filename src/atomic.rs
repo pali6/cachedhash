@@ -49,10 +49,7 @@ impl Default for AtomicOptionNonZeroU64 {
 
 impl Debug for AtomicOptionNonZeroU64 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.get() {
-            Some(value) => write!(f, "Some({})", value),
-            None => write!(f, "None"),
-        }
+        self.get().fmt(f)
     }
 }
 
