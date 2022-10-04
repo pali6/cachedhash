@@ -233,4 +233,9 @@ mod tests {
         let foo = super::CachedHash::new("foo".to_string());
         assert_eq!(CachedHash::take_value(foo), "foo".to_string());
     }
+
+    #[test]
+    fn struct_is_small() {
+        assert!(std::mem::size_of::<super::CachedHash<String>>() <= std::mem::size_of::<String>() + std::mem::size_of::<u64>());
+    }
 }
