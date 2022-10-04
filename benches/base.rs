@@ -1,4 +1,4 @@
-use cachedhash::cachedhash::CachedHash;
+use cachedhash::CachedHash;
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::fmt::Formatter;
 use std::hash::Hash;
