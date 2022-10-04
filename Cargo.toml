@@ -2,6 +2,12 @@
 name = "cachedhash"
 version = "0.1.0"
 edition = "2021"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+description = "Wrapper for values that caches their hash."
+repository = "https://github.com/pali6/cachedhash"
+homepage = "https://github.com/pali6/cachedhash"
+keywords = ["hash", "cache", "hashing", "performance", "wrapper"]
 
 [lib]
 
