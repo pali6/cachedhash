@@ -24,4 +24,4 @@
 mod atomic;
 mod cachedhash;
 
-pub use cachedhash::CachedHash;
+pub use crate::cachedhash::CachedHash;
