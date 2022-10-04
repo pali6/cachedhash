@@ -1,4 +1,4 @@
-use std::{sync::atomic::AtomicU64, fmt::Debug, num::NonZeroU64};
+use std::{fmt::Debug, num::NonZeroU64, sync::atomic::AtomicU64};
 
 /// Think of this as a `Option<NonZeroU64>` but atomic.
 #[repr(transparent)]
@@ -61,7 +61,6 @@ impl Clone for AtomicOptionNonZeroU64 {
         AtomicOptionNonZeroU64(self.0.load(std::sync::atomic::Ordering::Relaxed).into())
     }
 }
-
 
 #[cfg(test)]
 mod tests {

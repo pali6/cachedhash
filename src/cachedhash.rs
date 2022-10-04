@@ -1,5 +1,5 @@
 use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher, BuildHasher, BuildHasherDefault};
+use std::hash::{BuildHasher, BuildHasherDefault, Hash, Hasher};
 use std::num::NonZeroU64;
 use std::ops::{Deref, DerefMut};
 
@@ -236,6 +236,9 @@ mod tests {
 
     #[test]
     fn struct_is_small() {
-        assert!(std::mem::size_of::<super::CachedHash<String>>() <= std::mem::size_of::<String>() + std::mem::size_of::<u64>());
+        assert!(
+            std::mem::size_of::<super::CachedHash<String>>()
+                <= std::mem::size_of::<String>() + std::mem::size_of::<u64>()
+        );
     }
 }

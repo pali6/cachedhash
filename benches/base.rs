@@ -5,7 +5,11 @@ use std::hash::Hash;
 use std::{collections::HashMap, fmt::Display};
 
 #[inline]
-fn move_things_around<T: Hash + Eq>(map1: &mut HashMap<T, ()>, map2: &mut HashMap<T, ()>, steps: usize) {
+fn move_things_around<T: Hash + Eq>(
+    map1: &mut HashMap<T, ()>,
+    map2: &mut HashMap<T, ()>,
+    steps: usize,
+) {
     for _ in 0..steps {
         for (key, value) in map1.drain() {
             map2.insert(key, value);
@@ -57,15 +61,13 @@ fn bench_hashmap<T: Eq + Hash + Clone>(
         BenchmarkId::new(name, Param(map_size, word_length, steps)),
         data,
         |b, data| {
-            b.iter(
-                || {
-                    let mut map = HashMap::new();
-                    for key in data {
-                        map.insert(key.clone(), ());
-                    }
-                    move_things_around(&mut map, &mut HashMap::new(), steps);
+            b.iter(|| {
+                let mut map = HashMap::new();
+                for key in data {
+                    map.insert(key.clone(), ());
                 }
-            )
+                move_things_around(&mut map, &mut HashMap::new(), steps);
+            })
         },
     );
 }
