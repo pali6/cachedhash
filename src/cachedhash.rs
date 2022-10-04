@@ -122,6 +122,12 @@ impl<T: Eq + Hash, BH: BuildHasher> DerefMut for CachedHash<T, BH> {
     }
 }
 
+impl<T: Eq + Hash, H: Hasher + Default> From<T> for CachedHash<T, BuildHasherDefault<H>> {
+    fn from(value: T) -> Self {
+        Self::new_with_hasher(value)
+    }
+}
+
 impl<T: Eq + Hash + Clone, BH: BuildHasher + Clone> Clone for CachedHash<T, BH> {
     fn clone(&self) -> Self {
         CachedHash {
