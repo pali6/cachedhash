@@ -1,3 +1,4 @@
+use std::borrow::{BorrowMut, Borrow};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{BuildHasher, BuildHasherDefault, Hash, Hasher};
 use std::num::NonZeroU64;
@@ -78,6 +79,30 @@ impl<T: Eq + Hash, BH: BuildHasher> Hash for CachedHash<T, BH> {
             self.hash.set(Some(hash));
             state.write_u64(hash.into());
         }
+    }
+}
+
+impl<T: Eq + Hash, BH: BuildHasher> AsMut<T> for CachedHash<T, BH> {
+    fn as_mut(&mut self) -> &mut T {
+        Self::get_mut(self)
+    }
+}
+
+impl<T: Eq + Hash, BH: BuildHasher> AsRef<T> for CachedHash<T, BH> {
+    fn as_ref(&self) -> &T {
+        Self::get(self)
+    }
+}
+
+impl<T: Eq + Hash, BH: BuildHasher> BorrowMut<T> for CachedHash<T, BH> {
+    fn borrow_mut(&mut self) -> &mut T {
+        Self::get_mut(self)
+    }
+}
+
+impl<T: Eq + Hash, BH: BuildHasher> Borrow<T> for CachedHash<T, BH> {
+    fn borrow(&self) -> &T {
+        Self::get(self)
     }
 }
 
