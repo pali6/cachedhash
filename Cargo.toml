@@ -9,6 +9,7 @@ edition = "2021"
 
 [dev-dependencies]
 criterion = "0.4"
+nohash-hasher = "0.2"
 
 [[bench]]
 name = "base"

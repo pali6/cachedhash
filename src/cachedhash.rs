@@ -272,4 +272,27 @@ mod tests {
                 <= std::mem::size_of::<String>() + std::mem::size_of::<u64>()
         );
     }
+
+    #[test]
+    fn zero_hash() {
+        use nohash_hasher::NoHashHasher;
+
+        struct FixedHash<const H: u64>();
+        impl<const H: u64> Eq for FixedHash<H> {}
+        impl<const H: u64> PartialEq for FixedHash<H> {
+            fn eq(&self, _other: &Self) -> bool {
+                true
+            }
+        }
+        impl<const H: u64> Hash for FixedHash<H> {
+            fn hash<HS: Hasher>(&self, state: &mut HS) {
+                state.write_u64(H);
+            }
+        }
+
+        assert!(calculate_hash_with_hasher::<FixedHash<0>, NoHashHasher<u64>>(&FixedHash::<0>()) == 0);
+        let foo: CachedHash<_, BuildHasherDefault<NoHashHasher<u64>>> = super::CachedHash::new_with_hasher(FixedHash::<0>());
+        let _ = calculate_hash(&foo);
+        assert!(foo.hash.get().is_some());
+    }
 }
