@@ -6,38 +6,38 @@ use std::ops::{Deref, DerefMut};
 
 use crate::atomic::AtomicOptionNonZeroU64;
 
-/// For a type `T`, [CachedHash] wraps `T` and implements [Hash] in a way that
+/// For a type `T`, [`CachedHash`] wraps `T` and implements [`Hash`] in a way that
 /// caches `T`'s hash value. The first time the hash is computed, it is stored
 /// and returned on subsequent calls. When the stored value is accessed mutably
-/// the hash is invalidated and needs to be recomputed again. [CachedHash] implements
-/// [Deref] and [DerefMut] so it can be used as a drop-in replacement for `T`.
+/// the hash is invalidated and needs to be recomputed again. [`CachedHash`] implements
+/// [`Deref`] and [`DerefMut`] so it can be used as a drop-in replacement for `T`.
 ///
 /// In order for the hash to be invalidated correctly the stored type cannot use
 /// interior mutability in a way that affects the hash. If this is the case, you
-/// can use [CachedHash::invalidate_hash] to invalidate the hash manually.
+/// can use [`CachedHash::invalidate_hash`] to invalidate the hash manually.
 ///
-/// By default the internal hash is computed using [DefaultHasher]. You can
-/// change this by providing a custom [Hasher] to [CachedHash::new_with_hasher] or
-/// even a custom [BuildHasher] to [CachedHash::new_with_build_hasher]. For most use
+/// By default the internal hash is computed using [`DefaultHasher`]. You can
+/// change this by providing a custom [`Hasher`] to [`CachedHash::new_with_hasher`] or
+/// even a custom [`BuildHasher`] to [`CachedHash::new_with_build_hasher`]. For most use
 /// cases you should not need to do this.
 ///
 /// Note that the hash of a value of type `T` and the same value wrapped in
-/// [CachedHash] are generally different.
+/// [`CachedHash`] are generally different.
 ///
 /// # Why is this useful?
 ///
 /// Sometimes you have a type that is expensive to hash (for example because)
 /// it is very large) but you need to store and move it between multiple
-/// [HashSet](https://doc.rust-lang.org/std/collections/struct.HashSet.html)s
-/// In this case you can wrap the type in [CachedHash] to cache the hash value
+/// [`HashSet`](https://doc.rust-lang.org/std/collections/struct.HashSet.html)s
+/// In this case you can wrap the type in [`CachedHash`] to cache the hash value
 /// only once.
 ///
-/// However, when the type is modified often [CachedHash] loses its advantage
-/// as the hash will get invalidated on every modification. [CachedHash] also
-/// needs to store the [u64] hash value which takes up some space.
+/// However, when the type is modified often [`CachedHash`] loses its advantage
+/// as the hash will get invalidated on every modification. [`CachedHash`] also
+/// needs to store the [`u64`] hash value which takes up some space.
 ///
 /// You can run `cargo bench` to see some simple naive benchmarks comparing
-/// a plaiin `HashSet` with a `HashSet` that stores values wrapped in [CachedHash].
+/// a plaiin `HashSet` with a `HashSet` that stores values wrapped in [`CachedHash`].
 #[derive(Debug)]
 pub struct CachedHash<T: Eq + Hash, BH: BuildHasher = BuildHasherDefault<DefaultHasher>> {
     value: T,
@@ -46,35 +46,35 @@ pub struct CachedHash<T: Eq + Hash, BH: BuildHasher = BuildHasherDefault<Default
 }
 
 impl<T: Eq + Hash> CachedHash<T> {
-    /// Creates a new [CachedHash] with the given value using [DefaultHasher].
+    /// Creates a new [`CachedHash`] with the given value using [`DefaultHasher`].
     ///
-    /// Note that the [BuildHasher] stored in the structure is a zero-sized type
-    /// that is both [Send] and [Sync] so it will not affect the [Send] and [Sync]
-    /// properties of [CachedHash] nor its size.
+    /// Note that the [`BuildHasher`] stored in the structure is a zero-sized type
+    /// that is both [`Send`] and [`Sync`] so it will not affect the [`Send`] and [`Sync`]
+    /// properties of [`CachedHash`] nor its size.
     pub fn new(value: T) -> Self {
-        CachedHash::<T>::new_with_hasher(value)
+        Self::new_with_hasher(value)
     }
 }
 
 impl<T: Eq + Hash, H: Hasher + Default> CachedHash<T, BuildHasherDefault<H>> {
-    /// Creates a new [CachedHash] with the given value using a provided hasher type implementing [Default].
+    /// Creates a new [`CachedHash`] with the given value using a provided hasher type implementing [`Default`].
     ///
-    /// Note that the [BuildHasher] stored in the structure is a zero-sized type
-    /// that is both [Send] and [Sync] so it will not affect the [Send] and [Sync]
-    /// properties of [CachedHash] nor its size.
+    /// Note that the [`BuildHasher`] stored in the structure is a zero-sized type
+    /// that is both [`Send`] and [`Sync`] so it will not affect the [`Send`] and [`Sync`]
+    /// properties of [`CachedHash`] nor its size.
     pub fn new_with_hasher(value: T) -> Self {
-        CachedHash::<T, BuildHasherDefault<H>>::new_with_build_hasher(value, Default::default())
+        Self::new_with_build_hasher(value, BuildHasherDefault::default())
     }
 }
 
 impl<T: Eq + Hash, BH: BuildHasher> CachedHash<T, BH> {
-    /// Creates a new [CachedHash] with the given value and [BuildHasher].
+    /// Creates a new [`CachedHash`] with the given value and [`BuildHasher`].
     ///
     /// Note that `build_hasher` is stored in the structure and as such it can
-    /// cause the type to stop being [Send] and [Sync] if the hasher is not.
+    /// cause the type to stop being [`Send`] and [`Sync`] if the hasher is not.
     /// It can also increase the size of the structure.
-    pub fn new_with_build_hasher(value: T, build_hasher: BH) -> Self {
-        CachedHash {
+    pub const fn new_with_build_hasher(value: T, build_hasher: BH) -> Self {
+        Self {
             value,
             hash: AtomicOptionNonZeroU64::new_none(),
             build_hasher,
@@ -91,29 +91,30 @@ impl<T: Eq + Hash, BH: BuildHasher> CachedHash<T, BH> {
         this.hash.set(None);
     }
 
-    /// Destructs the [CachedHash] and returns the stored value.
+    /// Destructs the [`CachedHash`] and returns the stored value.
     #[inline]
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // false positive, `this` might get dropped
     pub fn take_value(this: Self) -> T {
         this.value
     }
 
     /// Explicitly returns an immutable reference to the stored value.
     ///
-    /// Most of the time this will not be necessary as [CachedHash]
-    /// implements [Deref] so autoderef rules will automatically dereference
+    /// Most of the time this will not be necessary as [`CachedHash`]
+    /// implements [`Deref`] so autoderef rules will automatically dereference
     /// it to the stored value.
     #[inline]
     #[must_use]
-    pub fn get(this: &Self) -> &T {
+    pub const fn get(this: &Self) -> &T {
         &this.value
     }
 
     /// Explicitly returns a mutable reference to the stored value and
     /// invalidates the cached hash.
     ///
-    /// Most of the time this will not be necessary as [CachedHash] implements
-    /// [DerefMut] so autoderef rules will automatically dereference it to the
+    /// Most of the time this will not be necessary as [`CachedHash`] implements
+    /// [`DerefMut`] so autoderef rules will automatically dereference it to the
     /// stored value. (Such dereference still invalidates the stored hash.)
     #[inline]
     #[must_use]
@@ -194,7 +195,7 @@ impl<T: Eq + Hash, H: Hasher + Default> From<T> for CachedHash<T, BuildHasherDef
 
 impl<T: Eq + Hash + Clone, BH: BuildHasher + Clone> Clone for CachedHash<T, BH> {
     fn clone(&self) -> Self {
-        CachedHash {
+        Self {
             value: self.value.clone(),
             hash: self.hash.clone(),
             build_hasher: self.build_hasher.clone(),

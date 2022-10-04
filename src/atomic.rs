@@ -2,16 +2,17 @@ use std::{fmt::Debug, num::NonZeroU64, sync::atomic::AtomicU64};
 
 /// Think of this as a `Option<NonZeroU64>` but atomic.
 #[repr(transparent)]
+#[allow(clippy::module_name_repetitions)]
 pub struct AtomicOptionNonZeroU64(AtomicU64);
 
 impl AtomicOptionNonZeroU64 {
-    pub fn new_none() -> Self {
-        AtomicOptionNonZeroU64(AtomicU64::new(0))
+    pub const fn new_none() -> Self {
+        Self(AtomicU64::new(0))
     }
 
     #[allow(dead_code)]
     pub fn new_some(value: NonZeroU64) -> Self {
-        AtomicOptionNonZeroU64(AtomicU64::new(value.into()))
+        Self(AtomicU64::new(value.into()))
     }
 
     #[inline]
@@ -36,14 +37,14 @@ impl AtomicOptionNonZeroU64 {
 
     #[inline]
     pub fn set(&self, value: Option<NonZeroU64>) {
-        let value = value.map(Into::into).unwrap_or(0);
+        let value = value.map_or(0, Into::into);
         self.0.store(value, std::sync::atomic::Ordering::Relaxed);
     }
 }
 
 impl Default for AtomicOptionNonZeroU64 {
     fn default() -> Self {
-        AtomicOptionNonZeroU64::new_none()
+        Self::new_none()
     }
 }
 
@@ -55,7 +56,7 @@ impl Debug for AtomicOptionNonZeroU64 {
 
 impl Clone for AtomicOptionNonZeroU64 {
     fn clone(&self) -> Self {
-        AtomicOptionNonZeroU64(self.0.load(std::sync::atomic::Ordering::Relaxed).into())
+        Self(self.0.load(std::sync::atomic::Ordering::Relaxed).into())
     }
 }
 

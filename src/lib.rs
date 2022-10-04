@@ -1,3 +1,9 @@
+#![forbid(unsafe_code)]
+#![deny(clippy::all)]
+#![warn(clippy::pedantic)]
+#![warn(clippy::cargo)]
+#![warn(clippy::nursery)]
+
 //! For a type `T`, [`CachedHash<T>`](CachedHash) wraps `T` and
 //! implements [`Hash`](https://doc.rust-lang.org/std/hash/trait.Hash.html) in a way that
 //! caches `T`'s hash value. This is useful when `T` is expensive to hash (for
