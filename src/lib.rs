@@ -1,8 +1,8 @@
-//! For a type `T`, [`CachedHash<T>`](CachedHash) wraps `T` and 
+//! For a type `T`, [`CachedHash<T>`](CachedHash) wraps `T` and
 //! implements [`Hash`](https://doc.rust-lang.org/std/hash/trait.Hash.html) in a way that
 //! caches `T`'s hash value. This is useful when `T` is expensive to hash (for
 //! example if it contains a large vector) and you need to hash it multiple times
-//! with few modifications (for example by moving it between multiple 
+//! with few modifications (for example by moving it between multiple
 //! [`HashSet`](https://doc.rust-lang.org/std/collections/struct.HashSet.html)s).
 //!
 //! Stored hash is invalidated whenever the stored value is accessed mutably (via
