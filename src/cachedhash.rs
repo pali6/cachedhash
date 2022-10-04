@@ -1,4 +1,4 @@
-use std::borrow::{BorrowMut, Borrow};
+use std::borrow::{Borrow, BorrowMut};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{BuildHasher, BuildHasherDefault, Hash, Hasher};
 use std::num::NonZeroU64;
@@ -290,8 +290,11 @@ mod tests {
             }
         }
 
-        assert!(calculate_hash_with_hasher::<FixedHash<0>, NoHashHasher<u64>>(&FixedHash::<0>()) == 0);
-        let foo: CachedHash<_, BuildHasherDefault<NoHashHasher<u64>>> = super::CachedHash::new_with_hasher(FixedHash::<0>());
+        assert!(
+            calculate_hash_with_hasher::<FixedHash<0>, NoHashHasher<u64>>(&FixedHash::<0>()) == 0
+        );
+        let foo: CachedHash<_, BuildHasherDefault<NoHashHasher<u64>>> =
+            super::CachedHash::new_with_hasher(FixedHash::<0>());
         let _ = calculate_hash(&foo);
         assert!(foo.hash.get().is_some());
     }
