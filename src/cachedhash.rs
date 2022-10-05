@@ -139,7 +139,7 @@ impl<T: Eq + Hash, BH: BuildHasher> Hash for CachedHash<T, BH> {
         } else {
             let mut hasher = self.build_hasher.build_hasher();
             self.value.hash(&mut hasher);
-            // MaybeHash can only store non-zero values so we create a small collision by bumping up hash 0 to 1.
+            // AtomicOptionNonZeroU64 can only store non-zero values so we create a small collision by bumping up hash 0 to 1.
             let hash = NonZeroU64::new(hasher.finish()).unwrap_or(NonZeroU64::new(1).unwrap());
             self.hash.set(Some(hash));
             state.write_u64(hash.into());
