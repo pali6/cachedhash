@@ -37,7 +37,7 @@ use crate::atomic::AtomicOptionNonZeroU64;
 /// needs to store the [`u64`] hash value which takes up some space.
 ///
 /// You can run `cargo bench` to see some simple naive benchmarks comparing
-/// a plaiin `HashSet` with a `HashSet` that stores values wrapped in [`CachedHash`].
+/// a plain `HashSet` with a `HashSet` that stores values wrapped in [`CachedHash`].
 #[derive(Debug)]
 pub struct CachedHash<T: Eq + Hash, BH: BuildHasher = BuildHasherDefault<DefaultHasher>> {
     value: T,
