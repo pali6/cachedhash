@@ -38,6 +38,27 @@ use crate::atomic::AtomicOptionNonZeroU64;
 ///
 /// You can run `cargo bench` to see some simple naive benchmarks comparing
 /// a plain `HashSet` with a `HashSet` that stores values wrapped in [`CachedHash`].
+/// 
+/// # Details
+/// 
+/// Whenever the hash is requested if it is not already computed it is computed
+/// using the hasher provided by the `BH` [`BuildHasher`] and stored as an "internal
+/// hash". Note that this is not the same as the hash returned by the [`Hash`] implementation.
+/// That implementation feeds the internal hash into the hasher provided to the `hash`
+/// function. This means that the resulting hash is the hash of the hash of the stored
+/// value.
+/// 
+/// However, there is one more issue. If we wanted to represent both the full 
+/// range of hash values and the possibility of the hash not being computed yet,
+/// we would need 65 bits. In order to save space we need to reserve one value 
+/// as a sentinel (this also lets us work with the stored "maybe-hash" atomically).
+/// This means that we need to artificially create a hash collision. Current
+/// implementation does this by changing the "internal hash" from 0 to 1 if it ends
+/// up being zero. This is generally not an issue. However, if you are using a custom hasher
+/// this might affect you.
+/// 
+/// This behaviour is not guaranteed and may change in the future. If this
+/// behaviour does not fit for your use case please open an issue.
 #[derive(Debug)]
 pub struct CachedHash<T: Eq + Hash, BH: BuildHasher = BuildHasherDefault<DefaultHasher>> {
     value: T,
