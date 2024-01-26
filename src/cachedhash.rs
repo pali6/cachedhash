@@ -1,4 +1,5 @@
 use std::borrow::{Borrow, BorrowMut};
+use std::cmp::Ordering;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{BuildHasher, BuildHasherDefault, Hash, Hasher};
 use std::num::NonZeroU64;
@@ -64,6 +65,18 @@ pub struct CachedHash<T: Eq + Hash, BH: BuildHasher = BuildHasherDefault<Default
     value: T,
     hash: AtomicOptionNonZeroU64,
     build_hasher: BH,
+}
+
+impl<T: Eq + Hash> PartialOrd for CachedHash<T> where T: PartialOrd {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.value.partial_cmp(&other.value)
+    }
+}
+
+impl<T: Eq + Hash> Ord for CachedHash<T> where T: Ord {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.value.cmp(&other.value)
+    }
 }
 
 impl<T: Eq + Hash> CachedHash<T> {
