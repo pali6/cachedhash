@@ -1,4 +1,3 @@
-use std::borrow::{Borrow, BorrowMut};
 use std::cmp::Ordering;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{BuildHasher, BuildHasherDefault, Hash, Hasher};
@@ -189,18 +188,6 @@ impl<T: Eq + Hash, BH: BuildHasher> AsMut<T> for CachedHash<T, BH> {
 
 impl<T: Eq + Hash, BH: BuildHasher> AsRef<T> for CachedHash<T, BH> {
     fn as_ref(&self) -> &T {
-        Self::get(self)
-    }
-}
-
-impl<T: Eq + Hash, BH: BuildHasher> BorrowMut<T> for CachedHash<T, BH> {
-    fn borrow_mut(&mut self) -> &mut T {
-        Self::get_mut(self)
-    }
-}
-
-impl<T: Eq + Hash, BH: BuildHasher> Borrow<T> for CachedHash<T, BH> {
-    fn borrow(&self) -> &T {
         Self::get(self)
     }
 }
