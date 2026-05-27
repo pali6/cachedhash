@@ -1,6 +1,8 @@
+use std::cmp::Ordering;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{BuildHasher, BuildHasherDefault, Hash, Hasher};
 use std::marker::PhantomData;
+use std::ops::Deref;
 
 use crate::atomic::nonzero_hash;
 
@@ -85,6 +87,36 @@ impl<T: std::fmt::Debug + ?Sized, BH> std::fmt::Debug for CachedHashKey<T, BH> {
     }
 }
 
+impl<T: PartialOrd + ?Sized, BH> PartialOrd for CachedHashKey<T, BH> {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.value.partial_cmp(&other.value)
+    }
+}
+
+impl<T: Ord + ?Sized, BH> Ord for CachedHashKey<T, BH> {
+    #[inline]
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.value.cmp(&other.value)
+    }
+}
+
+impl<T: ?Sized, BH> Deref for CachedHashKey<T, BH> {
+    type Target = T;
+
+    #[inline]
+    fn deref(&self) -> &T {
+        &self.value
+    }
+}
+
+impl<T: ?Sized, BH> AsRef<T> for CachedHashKey<T, BH> {
+    #[inline]
+    fn as_ref(&self) -> &T {
+        &self.value
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::{HashMap, HashSet};
@@ -164,5 +196,21 @@ mod tests {
             hash_one(&cached),
             hash_one(CachedHashKey::<String>::from_ref(&value))
         );
+    }
+
+    #[test]
+    fn deref_and_as_ref() {
+        fn takes_str(s: impl AsRef<str>) -> usize {
+            s.as_ref().len()
+        }
+
+        let value = "hello".to_string();
+        let key: &CachedHashKey<String> = CachedHashKey::from_ref(&value);
+
+        assert_eq!(key.len(), 5);
+        assert!(key.starts_with("he"));
+
+        let s: &String = key.as_ref();
+        assert_eq!(takes_str(s), 5);
     }
 }
