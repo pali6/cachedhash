@@ -2,6 +2,7 @@
 #![warn(clippy::pedantic)]
 #![warn(clippy::cargo)]
 #![warn(clippy::nursery)]
+#![allow(clippy::mutable_key_type)]
 
 //! For a type `T`, [`CachedHash<T>`](CachedHash) wraps `T` and
 //! implements [`Hash`](https://doc.rust-lang.org/std/hash/trait.Hash.html) in a way that

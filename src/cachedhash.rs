@@ -7,6 +7,8 @@ use std::ops::{Deref, DerefMut};
 use crate::atomic::{nonzero_hash, AtomicOptionNonZeroU64};
 use crate::cachedhashkey::CachedHashKey;
 
+/// [`Deref`] wrapper around `T`, which caches the hash of `T` for efficient repeated hashing.
+///
 /// For a type `T`, [`CachedHash`] wraps `T` and implements [`Hash`] in a way that
 /// caches `T`'s hash value. The first time the hash is computed, it is stored
 /// and returned on subsequent calls. When the stored value is accessed mutably
@@ -284,6 +286,7 @@ mod tests {
     fn hash_same_after_clone() {
         let foo = super::CachedHash::new("foo".to_string());
         let hash = calculate_hash(&foo);
+        #[allow(clippy::redundant_clone)]
         let foo2 = foo.clone();
         assert_eq!(hash, calculate_hash(&foo2));
     }

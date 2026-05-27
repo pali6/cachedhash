@@ -35,13 +35,10 @@ fn bench(c: &mut Criterion) {
             for &steps in [1, 5, 10, 20].iter() {
                 let mut data = vec![];
                 for j in 0..map_size {
-                    data.push(j.to_string().repeat(word_length as usize));
+                    data.push(j.to_string().repeat(word_length));
                 }
                 bench_hashmap("Regular", &mut group, map_size, word_length, steps, &data);
-                let data = data
-                    .into_iter()
-                    .map(|s| CachedHash::new(s))
-                    .collect::<Vec<_>>();
+                let data = data.into_iter().map(CachedHash::new).collect::<Vec<_>>();
                 bench_hashmap("Cached", &mut group, map_size, word_length, steps, &data);
             }
         }
