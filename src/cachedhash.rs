@@ -62,6 +62,20 @@ use crate::cachedhashkey::CachedHashKey;
 ///
 /// This behaviour is not guaranteed and may change in the future. If this
 /// behaviour does not fit for your use case please open an issue.
+///
+/// # `BH` statelessness
+///
+/// Every constructor of [`CachedHash`] statically asserts that `BH` is a
+/// zero-sized type, so a stateful [`BuildHasher`] (e.g.
+/// [`std::collections::hash_map::RandomState`]) is a compile-time error.
+/// You probably do not want stateful build hashers for this anyway, but this is
+/// also a matter of correctness. We need that [`Eq`] and [`Hash`] act sensibly together.
+/// However, with a stateful hasher it could happen that you initialize two instances of
+/// [`CachedHash`] with the same value but different build hashers, and then even though
+/// the values are equal, they would not get the same hash. We could require that the
+/// build hasher implements [`Eq`] and compare that. But in practice you probably do not
+/// want to store a stateful hash in this struct in the first place. If you do have a
+/// use case for that, please open an issue.
 #[derive(Debug)]
 pub struct CachedHash<T: Eq + Hash, BH: BuildHasher = BuildHasherDefault<DefaultHasher>> {
     value: T,
@@ -106,10 +120,21 @@ impl<T: Eq + Hash, H: Hasher + Default> CachedHash<T, BuildHasherDefault<H>> {
 impl<T: Eq + Hash, BH: BuildHasher> CachedHash<T, BH> {
     /// Creates a new [`CachedHash`] with the given value and [`BuildHasher`].
     ///
-    /// Note that `build_hasher` is stored in the structure and as such it can
-    /// cause the type to stop being [`Send`] and [`Sync`] if the hasher is not.
-    /// It can also increase the size of the structure.
+    /// The build hasher must be stateless. This is enforced by a `const` assertion
+    /// that checks that `BH` is a zero-sized type. See the struct-level docs for the reasoning.
+    ///
+    /// ```compile_fail
+    /// use std::collections::hash_map::RandomState;
+    /// use cachedhash::CachedHash;
+    /// let _ = CachedHash::new_with_build_hasher(0u32, RandomState::new());
+    /// ```
     pub const fn new_with_build_hasher(value: T, build_hasher: BH) -> Self {
+        const {
+            assert!(
+                core::mem::size_of::<BH>() == 0,
+                "BH must be a zero-sized type",
+            );
+        }
         Self {
             value,
             hash: AtomicOptionNonZeroU64::new_none(),
@@ -180,10 +205,8 @@ impl<T: Eq + Hash, BH: BuildHasher> Hash for CachedHash<T, BH> {
     }
 }
 
-impl<T: Eq + Hash, H: Hasher + Default> Borrow<CachedHashKey<T, BuildHasherDefault<H>>>
-    for CachedHash<T, BuildHasherDefault<H>>
-{
-    fn borrow(&self) -> &CachedHashKey<T, BuildHasherDefault<H>> {
+impl<T: Eq + Hash, BH: BuildHasher + Default> Borrow<CachedHashKey<T, BH>> for CachedHash<T, BH> {
+    fn borrow(&self) -> &CachedHashKey<T, BH> {
         CachedHashKey::from_ref(&self.value)
     }
 }

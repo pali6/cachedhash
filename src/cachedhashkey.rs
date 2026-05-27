@@ -30,11 +30,9 @@ use crate::atomic::nonzero_hash;
 /// assert!(set.contains(CachedHashKey::from_ref(&needle)));
 /// ```
 ///
-/// # Restrictions
-///
-/// The [`Borrow<CachedHashKey<T, BH>>`](std::borrow::Borrow) impl on
-/// [`CachedHash`](crate::CachedHash) is only provided when `BH` is
-/// [`BuildHasherDefault<H>`].
+/// # `BH` statelessness
+/// 
+/// See [`CachedHash`] docs for the reasoning behind the requirement that `BH` be a zero-sized type.
 #[repr(transparent)]
 pub struct CachedHashKey<T: ?Sized, BH = BuildHasherDefault<DefaultHasher>> {
     _phantom: PhantomData<fn() -> BH>,
@@ -43,9 +41,18 @@ pub struct CachedHashKey<T: ?Sized, BH = BuildHasherDefault<DefaultHasher>> {
 
 impl<T: ?Sized, BH> CachedHashKey<T, BH> {
     /// Reinterpret a `&T` as a `&CachedHashKey<T, BH>`. Zero-cost operation.
+    ///
+    /// The build hasher type `BH` must be stateless. This is enforced by a `const`
+    /// assertion that checks that `BH` is a zero-sized type. See the struct-level docs for the reasoning.
     #[inline]
     #[must_use]
     pub const fn from_ref(value: &T) -> &Self {
+        const {
+            assert!(
+                core::mem::size_of::<BH>() == 0,
+                "BH must be a zero-sized type",
+            );
+        }
         // SAFETY: CachedHashKey is repr(transparent) over T. The only
         // non-1-ZST field is value; _phantom is a 1-ZST. Therefore
         // CachedHashKey<T, BH> has identical layout, size, alignment, and ABI
