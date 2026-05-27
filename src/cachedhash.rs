@@ -1,10 +1,11 @@
+use std::borrow::Borrow;
 use std::cmp::Ordering;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{BuildHasher, BuildHasherDefault, Hash, Hasher};
-use std::num::NonZeroU64;
 use std::ops::{Deref, DerefMut};
 
-use crate::atomic::AtomicOptionNonZeroU64;
+use crate::atomic::{nonzero_hash, AtomicOptionNonZeroU64};
+use crate::cachedhashkey::CachedHashKey;
 
 /// For a type `T`, [`CachedHash`] wraps `T` and implements [`Hash`] in a way that
 /// caches `T`'s hash value. The first time the hash is computed, it is stored
@@ -170,13 +171,18 @@ impl<T: Eq + Hash, BH: BuildHasher> Hash for CachedHash<T, BH> {
         if let Some(hash) = self.hash.get_raw() {
             state.write_u64(hash);
         } else {
-            let mut hasher = self.build_hasher.build_hasher();
-            self.value.hash(&mut hasher);
-            // AtomicOptionNonZeroU64 can only store non-zero values so we create a small collision by bumping up hash 0 to 1.
-            let hash = NonZeroU64::new(hasher.finish()).unwrap_or(NonZeroU64::new(1).unwrap());
+            let hash = nonzero_hash(&self.build_hasher, &self.value);
             self.hash.set(Some(hash));
             state.write_u64(hash.into());
         }
+    }
+}
+
+impl<T: Eq + Hash, H: Hasher + Default> Borrow<CachedHashKey<T, BuildHasherDefault<H>>>
+    for CachedHash<T, BuildHasherDefault<H>>
+{
+    fn borrow(&self) -> &CachedHashKey<T, BuildHasherDefault<H>> {
+        CachedHashKey::from_ref(&self.value)
     }
 }
 

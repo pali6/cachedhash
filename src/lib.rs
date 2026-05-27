@@ -1,4 +1,4 @@
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 #![warn(clippy::pedantic)]
 #![warn(clippy::cargo)]
 #![warn(clippy::nursery)]
@@ -18,8 +18,14 @@
 //! interior mutability in a way that affects the hash. If this is the case, you
 //! can use [`CachedHash::invalidate_hash`](CachedHash::invalidate_hash)
 //!  to invalidate the hash manually.
+//!
+//! To look up entries in a `HashSet<CachedHash<T>>` or `HashMap<CachedHash<T>, V>`
+//! by a `&T` without first wrapping it into a `CachedHash`, use
+//! [`CachedHashKey::from_ref`](CachedHashKey::from_ref).
 
 mod atomic;
 mod cachedhash;
+mod cachedhashkey;
 
 pub use crate::cachedhash::CachedHash;
+pub use crate::cachedhashkey::CachedHashKey;

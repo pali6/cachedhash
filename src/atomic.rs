@@ -1,4 +1,18 @@
-use std::{fmt::Debug, num::NonZeroU64, sync::atomic::AtomicU64};
+use std::{
+    fmt::Debug,
+    hash::{BuildHasher, Hash},
+    num::NonZeroU64,
+    sync::atomic::AtomicU64,
+};
+
+/// Compute the internal hash of `value` using `build_hasher` and apply the
+/// 0 -> 1 collision fix required so the result fits in [`AtomicOptionNonZeroU64`].
+///
+/// Both [`crate::CachedHash`] and [`crate::CachedHashKey`] use this.
+#[inline]
+pub fn nonzero_hash<T: Hash + ?Sized, BH: BuildHasher>(build_hasher: &BH, value: &T) -> NonZeroU64 {
+    NonZeroU64::new(build_hasher.hash_one(value)).unwrap_or(NonZeroU64::MIN)
+}
 
 /// Think of this as a `Option<NonZeroU64>` but atomic.
 #[repr(transparent)]
