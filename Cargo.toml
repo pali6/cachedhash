@@ -14,7 +14,7 @@ categories = ["caching"]
 [dependencies]
 
 [dev-dependencies]
-criterion = "0.4"
+criterion = "0.8"
 nohash-hasher = "0.2"
 
 [[bench]]
